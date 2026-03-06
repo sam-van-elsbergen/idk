@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Overlay Dashboard</title>
+    <link rel="stylesheet" href="/dashboard.css" />
+  </head>
+  <body>
+    <header>
+      <div>
+        <div class="eyebrow">Live moderation</div>
+        <h1>Overlay Dashboard</h1>
+      </div>
+      <div class="right">
+        <button id="enableAlertsBtn" class="ghost">Meldingen aan</button>
+        <button id="clearBtn" class="ghost">Clear pending</button>
+        <span id="statusDot" class="dot"></span>
+      </div>
+    </header>
+
+    <main>
+      <section class="panel panel-status">
+        <div class="panel-head">
+          <h2>Status</h2>
+          <span id="liveBadge" class="badge">connecting</span>
+        </div>
+        <pre id="statusBox">loading…</pre>
+      </section>
+
+      <section class="panel panel-notify">
+        <div class="panel-head">
+          <h2>Paneelmelding naar overlay</h2>
+        </div>
+        <div class="notify-row">
+          <input id="notifyText" maxlength="180" placeholder="Bijv. Nieuwe ronde start over 2 minuten" />
+          <button id="notifyBtn">Verzend</button>
+        </div>
+        <div id="notifyMsg" class="helper"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Pending</h2>
+          <span id="pendingCount" class="count">0</span>
+        </div>
+        <div id="pendingList" class="list"></div>
+        <div id="emptyPending" class="empty">No pending items.</div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>History</h2>
+          <span id="historyCount" class="count">0</span>
+        </div>
+        <div id="historyList" class="list"></div>
+        <div id="emptyHistory" class="empty">No history yet.</div>
+      </section>
+    </main>
+
+    <div id="toastWrap" class="toast-wrap"></div>
+    <script src="/dashboard.js"></script>
+  </body>
+</html>

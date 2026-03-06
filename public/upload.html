@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Upload to Stream</title>
+    <link rel="stylesheet" href="/upload.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Upload voor in de stream</h1>
+      <p class="muted">Alles komt eerst in een wachtrij. De streamer moet het goedkeuren. GIF-bestanden zijn uitgeschakeld.</p>
+
+      <div class="card">
+        <label>Naam (optioneel)</label>
+        <input id="nickname" placeholder="bijv. Danny" maxlength="40" />
+
+        <label>Upload foto</label>
+        <input id="image" type="file" accept="image/png,image/jpeg,image/webp" />
+
+        <div class="row">
+          <button id="sendImage">Upload foto</button>
+          <span id="imgMsg" class="muted"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <label>Of stuur tekst</label>
+        <textarea id="text" maxlength="140" placeholder="Typ hier je tekst..."></textarea>
+        <div class="row">
+          <button id="sendText">Verstuur tekst</button>
+          <span id="txtMsg" class="muted"></span>
+        </div>
+      </div>
+
+      <p class="small muted">Tip: als je een link hebt met <code>?k=...</code>, laat die staan.</p>
+    </div>
+
+    <script src="/upload.js"></script>
+  </body>
+</html>

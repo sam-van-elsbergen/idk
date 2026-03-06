@@ -1,0 +1,57 @@
+:root {
+  --bg:#0b0f16; --card:#121a26; --text:#fff; --muted: rgba(255,255,255,.7);
+  --btn:#2ecc71; --btn2:#3aa0ff;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+.wrap { max-width: 720px; margin: 0 auto; padding: 18px; }
+
+h1 { margin: 6px 0 6px; font-size: 22px; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+
+.card {
+  margin-top: 14px;
+  background: var(--card);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px;
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+label { font-size: 13px; color: var(--muted); }
+
+input, textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.25);
+  color: #fff;
+  outline: none;
+}
+
+textarea { min-height: 90px; resize: vertical; }
+
+button {
+  border: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+#sendImage { background: var(--btn); color: #06110a; }
+#sendText  { background: var(--btn2); color: #06101a; }
+
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+code { background: rgba(255,255,255,.08); padding: 2px 6px; border-radius: 8px; }

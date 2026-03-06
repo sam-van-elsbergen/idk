@@ -1,0 +1,57 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  overflow: hidden;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+#stage {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  padding: 28px;
+}
+.card {
+  width: min(82vw, 1200px);
+  max-height: 82vh;
+  background: linear-gradient(180deg, rgba(12,18,30,.88), rgba(10,14,24,.78));
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 26px;
+  padding: 22px 24px;
+  box-shadow: 0 26px 70px rgba(0,0,0,.36);
+  color: white;
+  backdrop-filter: blur(10px);
+  transform: translateY(18px) scale(.98);
+  opacity: 0;
+  transition: transform .24s ease, opacity .24s ease;
+}
+.card.in { transform: translateY(0) scale(1); opacity: 1; }
+.card.out { transform: translateY(18px) scale(.98); opacity: 0; }
+.meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.08);
+  font-size: 14px;
+  font-weight: 700;
+  opacity: .95;
+  margin-bottom: 14px;
+}
+.text {
+  font-size: clamp(34px, 4vw, 62px);
+  font-weight: 800;
+  line-height: 1.06;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.img {
+  display: block;
+  max-width: 100%;
+  max-height: calc(82vh - 110px);
+  margin: 0 auto;
+  border-radius: 18px;
+}
