@@ -3,39 +3,73 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Upload to Stream</title>
+    <title>Send to Stream</title>
     <link rel="stylesheet" href="/upload.css" />
   </head>
   <body>
-    <div class="wrap">
-      <h1>Upload voor in de stream</h1>
-      <p class="muted">Alles komt eerst in een wachtrij. De streamer moet het goedkeuren. GIF-bestanden zijn uitgeschakeld.</p>
+    <div id="announcementBar" class="announcement-bar hidden"></div>
 
-      <div class="card">
-        <label>Naam (optioneel)</label>
-        <input id="nickname" placeholder="bijv. Danny" maxlength="40" />
-
-        <label>Upload foto</label>
-        <input id="image" type="file" accept="image/png,image/jpeg,image/webp" />
-
-        <div class="row">
-          <button id="sendImage">Upload foto</button>
-          <span id="imgMsg" class="muted"></span>
+    <main class="page-shell">
+      <section class="hero-card">
+        <div>
+          <div class="eyebrow">Community upload portal</div>
+          <h1>Stuur iets in voor de stream</h1>
+          <p class="intro">Tekst en afbeeldingen gaan eerst door een handmatige review. GIF-bestanden zijn uitgeschakeld en de wachttijd is altijd een schatting.</p>
         </div>
-      </div>
+        <div class="stats-grid">
+          <article class="stat-card">
+            <span>Open wachtrij</span>
+            <strong id="queueCount">0</strong>
+          </article>
+          <article class="stat-card">
+            <span>Geschatte wachttijd</span>
+            <strong id="queueEta">—</strong>
+          </article>
+        </div>
+      </section>
 
-      <div class="card">
-        <label>Of stuur tekst</label>
-        <textarea id="text" maxlength="140" placeholder="Typ hier je tekst..."></textarea>
-        <div class="row">
+      <section class="identity-card">
+        <label for="nickname">Naam</label>
+        <input id="nickname" placeholder="Bijv. samske" maxlength="40" />
+        <p class="muted">Deze naam wordt getoond bij je ingestuurde item.</p>
+      </section>
+
+      <section class="submission-grid">
+        <article class="submit-card accent-blue">
+          <div class="card-head">
+            <div>
+              <div class="card-kicker">Afbeelding</div>
+              <h2>Upload een foto</h2>
+            </div>
+            <span class="tag">PNG / JPG / WEBP</span>
+          </div>
+          <p class="muted">Een goede, scherpe afbeelding werkt het best op stream. GIFs worden automatisch geweigerd.</p>
+          <label class="field-label" for="image">Bestand kiezen</label>
+          <input id="image" type="file" accept="image/png,image/jpeg,image/webp" />
+          <button id="sendImage">Upload afbeelding</button>
+          <div id="imgMsg" class="feedback muted"></div>
+        </article>
+
+        <article class="submit-card accent-purple">
+          <div class="card-head">
+            <div>
+              <div class="card-kicker">Tekst</div>
+              <h2>Stuur een bericht</h2>
+            </div>
+            <span class="tag">max 140 tekens</span>
+          </div>
+          <p class="muted">Korte, duidelijke teksten komen het snelst en mooist door de reviewflow.</p>
+          <label class="field-label" for="text">Jouw tekst</label>
+          <textarea id="text" maxlength="140" placeholder="Typ hier je bericht..."></textarea>
           <button id="sendText">Verstuur tekst</button>
-          <span id="txtMsg" class="muted"></span>
-        </div>
-      </div>
+          <div id="txtMsg" class="feedback muted"></div>
+        </article>
+      </section>
 
-      <p class="small muted">Tip: als je een link hebt met <code>?k=...</code>, laat die staan.</p>
-    </div>
+      <p class="hint">Gebruik je een speciale link met <code>?k=...</code>, laat die parameter dan gewoon staan.</p>
+    </main>
 
+    <footer class="site-footer">made with ❤️ by samske</footer>
     <script src="/upload.js"></script>
   </body>
 </html>

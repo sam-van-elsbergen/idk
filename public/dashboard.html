@@ -3,61 +3,106 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Overlay Dashboard</title>
+    <title>SamSke Studio Control</title>
     <link rel="stylesheet" href="/dashboard.css" />
   </head>
   <body>
-    <header>
+    <div id="announcementBar" class="announcement-bar hidden"></div>
+
+    <header class="shell-header">
       <div>
-        <div class="eyebrow">Live moderation</div>
-        <h1>Overlay Dashboard</h1>
+        <div class="eyebrow">Studio control suite</div>
+        <h1>SamSke Moderation Console</h1>
+        <p class="subtitle">Realtime approval flow voor tekst en beelden, gebouwd voor snelle live shows.</p>
       </div>
-      <div class="right">
+      <div class="header-actions">
         <button id="enableAlertsBtn" class="ghost">Meldingen aan</button>
-        <button id="clearBtn" class="ghost">Clear pending</button>
-        <span id="statusDot" class="dot"></span>
+        <button id="clearBtn" class="ghost danger">Leeg wachtrij</button>
+        <div class="live-pill"><span id="statusDot" class="dot"></span><span id="liveBadge">connecting</span></div>
       </div>
     </header>
 
-    <main>
-      <section class="panel panel-status">
-        <div class="panel-head">
-          <h2>Status</h2>
-          <span id="liveBadge" class="badge">connecting</span>
-        </div>
-        <pre id="statusBox">loading…</pre>
+    <main class="shell">
+      <section class="hero-grid">
+        <article class="hero-card metric-card">
+          <span class="metric-label">Open inzendingen</span>
+          <strong id="metricPending">0</strong>
+          <span class="metric-note">items wachten op review</span>
+        </article>
+        <article class="hero-card metric-card">
+          <span class="metric-label">Geschatte wachttijd</span>
+          <strong id="metricWait">0s</strong>
+          <span class="metric-note">globale indicatie voor nieuwe uploads</span>
+        </article>
+        <article class="hero-card metric-card">
+          <span class="metric-label">Live verbindingen</span>
+          <strong id="metricClients">0</strong>
+          <span class="metric-note">dashboard / upload / overlay clients</span>
+        </article>
+        <article class="hero-card metric-card">
+          <span class="metric-label">Laatste approval</span>
+          <strong id="metricApproved">—</strong>
+          <span class="metric-note">laatst verzonden item naar de stream</span>
+        </article>
       </section>
 
-      <section class="panel panel-notify">
-        <div class="panel-head">
-          <h2>Paneelmelding naar overlay</h2>
-        </div>
-        <div class="notify-row">
-          <input id="notifyText" maxlength="180" placeholder="Bijv. Nieuwe ronde start over 2 minuten" />
-          <button id="notifyBtn">Verzend</button>
-        </div>
-        <div id="notifyMsg" class="helper"></div>
-      </section>
+      <section class="content-grid">
+        <article class="panel span-7">
+          <div class="panel-head">
+            <div>
+              <div class="panel-kicker">Site-wide banner</div>
+              <h2>Announcement</h2>
+            </div>
+            <span class="badge neutral">zichtbaar op dashboard + upload</span>
+          </div>
+          <div class="announcement-composer">
+            <input id="notifyText" maxlength="180" placeholder="Bijv. Uploads duren iets langer door drukte" />
+            <div class="button-row">
+              <button id="notifyBtn" class="primary">Publiceer</button>
+              <button id="clearAnnouncementBtn" class="ghost">Verwijder</button>
+            </div>
+          </div>
+          <div id="notifyMsg" class="helper"></div>
+        </article>
 
-      <section class="panel">
-        <div class="panel-head">
-          <h2>Pending</h2>
-          <span id="pendingCount" class="count">0</span>
-        </div>
-        <div id="pendingList" class="list"></div>
-        <div id="emptyPending" class="empty">No pending items.</div>
-      </section>
+        <article class="panel span-5">
+          <div class="panel-head">
+            <div>
+              <div class="panel-kicker">Live status</div>
+              <h2>Platform health</h2>
+            </div>
+            <span class="badge">secure</span>
+          </div>
+          <div id="statusCards" class="status-cards"></div>
+        </article>
 
-      <section class="panel">
-        <div class="panel-head">
-          <h2>History</h2>
-          <span id="historyCount" class="count">0</span>
-        </div>
-        <div id="historyList" class="list"></div>
-        <div id="emptyHistory" class="empty">No history yet.</div>
+        <article class="panel span-7">
+          <div class="panel-head">
+            <div>
+              <div class="panel-kicker">Queue</div>
+              <h2>Wachtrij</h2>
+            </div>
+            <span id="pendingCount" class="count">0</span>
+          </div>
+          <div id="pendingList" class="list"></div>
+          <div id="emptyPending" class="empty">Er staan nog geen items in de wachtrij.</div>
+        </article>
+
+        <article class="panel span-5">
+          <div class="panel-head">
+            <div>
+              <div class="panel-kicker">Audit trail</div>
+              <h2>History</h2>
+            </div>
+            <span id="historyCount" class="count">0</span>
+          </div>
+          <div id="historyList" class="list compact"></div>
+          <div id="emptyHistory" class="empty">Nog geen geschiedenis beschikbaar.</div>
+        </article>
       </section>
     </main>
 
+    <footer class="site-footer">made with ❤️ by samske</footer>
     <div id="toastWrap" class="toast-wrap"></div>
     <script src="/dashboard.js"></script>
   </body>

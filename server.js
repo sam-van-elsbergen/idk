@@ -26,7 +26,7 @@ function boolArg(name, fallback = false) {
 
 const FIXED_DURATION_SEC = 10;
 const CFG = {
-  port: clampInt(getArg('port', 3000), 3000, 1, 65535),
+  port: clampInt(getArg('port', process.env.PORT || 3000), 3000, 1, 65535),
   bind: getArg('bind', '0.0.0.0'),
   adminToken: (getArg('admin', process.env.ADMIN_TOKEN || 'goodboy') || '').trim(),
   uploadKey: (getArg('uploadKey', process.env.UPLOAD_KEY || '') || '').trim(),
@@ -46,6 +46,7 @@ const history = [];
 const HISTORY_MAX = 300;
 const clients = new Set();
 const shownQueue = [];
+let currentAnnouncement = null;
 
 function makeId() {
   return crypto.randomUUID ? crypto.randomUUID() : crypto.randomBytes(16).toString('hex');
@@ -59,7 +60,7 @@ function enqueuePending(item) {
     const dropped = pending.shift();
     pushHistory({ ...dropped, status: 'dropped', decidedAt: new Date().toISOString() });
   }
-  pending.unshift(item);
+  pending.push(item);
 }
 function requireAdmin(reqUrl) {
   const token = reqUrl.searchParams.get('token') || '';
@@ -77,6 +78,14 @@ function getClientIp(req) {
   }
   return req.socket.remoteAddress || 'unknown';
 }
+function estimateWaitSeconds(pendingAhead = pending.length) {
+  const safeAhead = Math.max(0, Number(pendingAhead) || 0);
+  return Math.max(15, safeAhead * FIXED_DURATION_SEC + 15);
+}
+function summarizeAnnouncement() {
+  if (!currentAnnouncement?.text) return null;
+  return { ...currentAnnouncement };
+}
 function getStatus() {
   return {
     bind: CFG.bind,
@@ -90,6 +99,8 @@ function getStatus() {
     historyCount: history.length,
     wsClients: clients.size,
     lastApprovedAt: shownQueue[0]?.approvedAt || null,
+    estimatedWaitSec: estimateWaitSeconds(pending.length),
+    announcement: summarizeAnnouncement(),
   };
 }
 
@@ -101,6 +112,7 @@ const MIME = {
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
   '.webp': 'image/webp',
+  '.svg': 'image/svg+xml',
 };
 
 function safeJoin(baseDir, p) {
@@ -158,7 +170,7 @@ function sendWs(sock, obj) {
   try { sock.write(wsFrameText(JSON.stringify(obj))); } catch {}
 }
 function emitState(reason = 'state') {
-  broadcast({ type: 'state', reason, status: getStatus(), pending, history });
+  broadcast({ type: 'state', reason, status: getStatus(), pending, history, announcement: summarizeAnnouncement() });
 }
 function emitToast(message, level = 'info') {
   broadcast({ type: 'toast', message: String(message || '').slice(0, 240), level });
@@ -222,7 +234,7 @@ function handleWsData(sock, chunk) {
 
     if (msg.type === 'hello') {
       sendWs(sock, { type: 'hello', ok: true, role: msg.role || 'client' });
-      sendWs(sock, { type: 'state', reason: 'hello', status: getStatus(), pending, history });
+      sendWs(sock, { type: 'state', reason: 'hello', status: getStatus(), pending, history, announcement: summarizeAnnouncement() });
     }
   }
   sock._wsBuf = buf;
@@ -322,6 +334,10 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, { ok: true, status: getStatus() });
     }
 
+    if (req.method === 'GET' && u.pathname === '/api/public-status') {
+      return sendJson(res, 200, { ok: true, status: getStatus() });
+    }
+
     if (req.method === 'GET' && u.pathname === '/api/pending') {
       if (!requireAdmin(u)) return sendJson(res, 401, { error: 'unauthorized' });
       return sendJson(res, 200, { ok: true, pending });
@@ -343,7 +359,7 @@ const server = http.createServer(async (req, res) => {
       if (shownQueue.length > 100) shownQueue.length = 100;
       pushHistory({ ...approved, decidedAt: approved.approvedAt });
       emitOverlay(approved);
-      emitToast(`Goedgekeurd: ${approved.kind === 'image' ? 'afbeelding' : 'tekst'} van ${approved.by}`,'success');
+      emitToast(`Goedgekeurd: ${approved.kind === 'image' ? 'afbeelding' : 'tekst'} van ${approved.by}`, 'success');
       emitState('approve');
       return sendJson(res, 200, { ok: true, item: approved });
     }
@@ -356,7 +372,7 @@ const server = http.createServer(async (req, res) => {
       const item = pending.splice(idx, 1)[0];
       const rejected = { ...item, status: 'rejected', decidedAt: new Date().toISOString() };
       pushHistory(rejected);
-      emitToast(`Geweigerd: ${rejected.kind === 'image' ? 'afbeelding' : 'tekst'} van ${rejected.by}`,'warning');
+      emitToast(`Geweigerd: ${rejected.kind === 'image' ? 'afbeelding' : 'tekst'} van ${rejected.by}`, 'warning');
       emitState('reject');
       return sendJson(res, 200, { ok: true, item: rejected });
     }
@@ -367,35 +383,35 @@ const server = http.createServer(async (req, res) => {
         const item = pending.shift();
         pushHistory({ ...item, status: 'cleared', decidedAt: new Date().toISOString() });
       }
-      emitToast('Wachtrij geleegd.','info');
+      emitToast('Wachtrij geleegd.', 'info');
       emitState('clear');
       return sendJson(res, 200, { ok: true });
     }
 
-    if (req.method === 'POST' && u.pathname === '/api/notify') {
+    if (req.method === 'POST' && u.pathname === '/api/announcement') {
       if (!requireAdmin(u)) return sendJson(res, 401, { error: 'unauthorized' });
       const body = await readBody(req, 32 * 1024);
       let data = null;
       try { data = JSON.parse(body.toString('utf8') || '{}'); } catch { return sendJson(res, 400, { error: 'bad_json' }); }
       const text = String(data?.text || '').trim().slice(0, 180);
       if (!text) return sendJson(res, 400, { error: 'missing_text' });
-      const item = {
+      currentAnnouncement = {
         id: makeId(),
-        kind: 'text',
         text,
+        updatedAt: new Date().toISOString(),
         by: 'Panel',
-        source: 'dashboard',
-        status: 'approved',
-        createdAt: new Date().toISOString(),
-        approvedAt: new Date().toISOString(),
       };
-      shownQueue.unshift(item);
-      if (shownQueue.length > 100) shownQueue.length = 100;
-      pushHistory({ ...item, decidedAt: item.approvedAt });
-      emitOverlay(item);
-      emitToast(`Paneelmelding verzonden: ${text}`,'success');
-      emitState('notify');
-      return sendJson(res, 200, { ok: true, item });
+      emitToast(`Announcement live op de site: ${text}`, 'success');
+      emitState('announcement');
+      return sendJson(res, 200, { ok: true, announcement: currentAnnouncement });
+    }
+
+    if (req.method === 'DELETE' && u.pathname === '/api/announcement') {
+      if (!requireAdmin(u)) return sendJson(res, 401, { error: 'unauthorized' });
+      currentAnnouncement = null;
+      emitToast('Announcement verwijderd.', 'info');
+      emitState('announcement-clear');
+      return sendJson(res, 200, { ok: true });
     }
 
     if (req.method === 'POST' && u.pathname === '/upload') {
@@ -422,6 +438,9 @@ const server = http.createServer(async (req, res) => {
       const nickname = String(fields.nickname || '').trim().slice(0, 40) || 'Anoniem';
       const text = String(fields.text || '').trim().slice(0, CFG.maxTextLen);
       const ip = getClientIp(req);
+      const pendingAhead = pending.length;
+      const estimatedWaitSec = estimateWaitSeconds(pendingAhead);
+      const queuePosition = pendingAhead + 1;
 
       if (imageFile) {
         if (!isAllowedUploadMime(imageFile.mime)) return sendJson(res, 400, { error: 'only_png_jpg_webp' });
@@ -445,11 +464,13 @@ const server = http.createServer(async (req, res) => {
           status: 'pending',
           createdAt: new Date().toISOString(),
           durationSec: FIXED_DURATION_SEC,
+          queuePosition,
+          estimatedWaitSec,
         };
         enqueuePending(item);
-        emitToast(`Nieuwe afbeelding van ${nickname}`,'info');
+        emitToast(`Nieuwe afbeelding van ${nickname}`, 'info');
         emitState('upload-image');
-        return sendJson(res, 200, { ok: true, queued: true, id: item.id });
+        return sendJson(res, 200, { ok: true, queued: true, id: item.id, queuePosition, estimatedWaitSec });
       }
 
       if (text) {
@@ -463,11 +484,13 @@ const server = http.createServer(async (req, res) => {
           status: 'pending',
           createdAt: new Date().toISOString(),
           durationSec: FIXED_DURATION_SEC,
+          queuePosition,
+          estimatedWaitSec,
         };
         enqueuePending(item);
-        emitToast(`Nieuwe tekst van ${nickname}`,'info');
+        emitToast(`Nieuwe tekst van ${nickname}`, 'info');
         emitState('upload-text');
-        return sendJson(res, 200, { ok: true, queued: true, id: item.id });
+        return sendJson(res, 200, { ok: true, queued: true, id: item.id, queuePosition, estimatedWaitSec });
       }
 
       return sendJson(res, 400, { error: 'missing_text_or_image' });
@@ -525,12 +548,13 @@ server.on('upgrade', (req, socket) => {
     'HTTP/1.1 101 Switching Protocols\r\n' +
     'Upgrade: websocket\r\n' +
     'Connection: Upgrade\r\n' +
-    `Sec-WebSocket-Accept: ${accept}\r\n\r\n`
+    `Sec-WebSocket-Accept: ${accept}\r\n` +
+    '\r\n'
   );
 
   socket._wsBuf = Buffer.alloc(0);
   clients.add(socket);
-  sendWs(socket, { type: 'state', reason: 'connect', status: getStatus(), pending, history });
+  sendWs(socket, { type: 'state', reason: 'connected', status: getStatus(), pending, history, announcement: summarizeAnnouncement() });
 
   socket.on('data', (chunk) => handleWsData(socket, chunk));
   socket.on('close', () => clients.delete(socket));
@@ -541,11 +565,7 @@ server.on('upgrade', (req, socket) => {
 server.listen(CFG.port, CFG.bind, () => {
   console.log(`✅ Server: http://${CFG.bind}:${CFG.port}`);
   console.log(`🖥️ Overlay: http://${CFG.bind}:${CFG.port}/overlay.html`);
-  console.log(`🧭 Dashboard: http://${CFG.bind}:${CFG.port}/dashboard.html?token=${encodeURIComponent(CFG.adminToken)}`);
-  const uploadUrl = CFG.uploadKey
-    ? `http://${CFG.bind}:${CFG.port}/upload.html?k=${encodeURIComponent(CFG.uploadKey)}`
-    : `http://${CFG.bind}:${CFG.port}/upload.html`;
-  console.log(`📤 Upload: ${uploadUrl}`);
+  console.log(`🧭 Dashboard: http://${CFG.bind}:${CFG.port}/dashboard.html?token=${CFG.adminToken}`);
+  console.log(`📤 Upload: http://${CFG.bind}:${CFG.port}/upload.html${CFG.uploadKey ? `?k=${CFG.uploadKey}` : ''}`);
   console.log('ℹ️ No API, no scraping, uploads only.');
-  console.log(`🔐 Admin token: ${CFG.adminToken}`);
 });
